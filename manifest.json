@@ -1,0 +1,33 @@
+{
+  "name": "OK Operasi · Alkes & Obat",
+  "short_name": "OK Operasi",
+  "description": "Manajemen alat kesehatan dan obat ruang operasi",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080c12",
+  "theme_color": "#080c12",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["medical", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Kamar OK 1",
+      "url": "./index.html#ok1",
+      "description": "Buka Kamar OK 1"
+    }
+  ]
+}
