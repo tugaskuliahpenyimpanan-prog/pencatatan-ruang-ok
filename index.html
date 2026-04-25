@@ -160,6 +160,33 @@ tbody td{padding:10px 10px;vertical-align:middle}
 .qa-inp{flex:1;background:var(--s1);border:1.5px solid var(--bdr2);border-radius:7px;color:var(--txt);font-family:var(--F);font-size:14px;padding:9px 12px;outline:none;transition:border-color var(--tr);min-height:44px}
 .qa-inp:focus{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-glow)}
 .qa-hint{font-size:10px;color:var(--txt3);margin-top:4px}
+
+/* ═══ VOICE BUTTON ═══ */
+.voice-btn{background:rgba(139,92,246,.1);border:1.5px solid var(--pur);color:var(--pur);border-radius:8px;width:44px;height:44px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;position:relative}
+.voice-btn:hover{background:rgba(139,92,246,.2);box-shadow:0 0 10px rgba(139,92,246,.4)}
+.voice-btn.listening{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);animation:voicePulse .7s ease-in-out infinite}
+.voice-btn.listening::after{content:'';position:absolute;inset:-4px;border-radius:11px;border:2px solid var(--red);opacity:.5;animation:voiceRing 1s ease-out infinite}
+@keyframes voicePulse{0%,100%{box-shadow:0 0 8px rgba(239,68,68,.4)}50%{box-shadow:0 0 18px rgba(239,68,68,.7)}}
+@keyframes voiceRing{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.4);opacity:0}}
+.voice-bar{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9100;background:linear-gradient(135deg,var(--s2),var(--s3));border:1.5px solid var(--red);border-radius:14px;padding:11px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.6);min-width:280px;max-width:90vw;animation:tIn .2s ease;pointer-events:none}
+.voice-bar.hidden{display:none}
+.voice-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;animation:voicePulse .7s ease-in-out infinite}
+.voice-bar-txt{flex:1;font-size:13px;font-weight:600;color:var(--txt)}
+.voice-bar-prev{font-size:11px;color:var(--acc);font-family:var(--M);margin-top:2px;min-height:14px}
+.mic-modal{max-width:420px}
+.mic-step{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.mic-step:last-child{border-bottom:none}
+.mic-snum{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.mic-stxt{font-size:13px;color:var(--txt);line-height:1.6}
+.mic-stxt b{color:var(--acc)}
+.mic-stxt code{background:var(--s3);border:1px solid var(--bdr2);border-radius:4px;padding:1px 6px;font-family:var(--M);font-size:11px;color:var(--or)}
+.mic-warn{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--or);margin-bottom:12px;line-height:1.6}
+.mic-example{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 13px;margin-top:10px}
+.mic-ex-title{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.mic-ex-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px}
+.mic-ex-say{color:var(--acc);font-family:var(--M)}
+.mic-ex-arr{color:var(--txt3)}
+.mic-ex-res{color:var(--grn)}
 .qa-sug{position:absolute;bottom:100%;left:12px;right:12px;background:var(--s1);border:1px solid var(--bdr2);border-radius:10px;overflow:hidden;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 -10px 30px rgba(0,0,0,.5);display:none}
 .qa-item{padding:9px 13px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bdr)}
 .qa-item:last-child{border-bottom:none}.qa-item:hover{background:var(--s2)}
@@ -625,6 +652,23 @@ tbody td{padding:10px 10px;vertical-align:middle}
   </div>
 </div></div>
 
+<!-- Voice Recording Bar -->
+<div class="voice-bar hidden" id="voiceBar">
+  <div class="voice-dot"></div>
+  <div style="flex:1">
+    <div class="voice-bar-txt" id="voiceBarTxt">🎤 Mendengarkan...</div>
+    <div class="voice-bar-prev" id="voiceBarPrev"></div>
+  </div>
+  <button onclick="stopVoiceExt()" style="background:none;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;pointer-events:auto">✕ Stop</button>
+</div>
+
+<!-- Modal Izin Mikrofon -->
+<div class="ov" id="ovMic"><div class="modal mic-modal">
+  <div class="mh"><h2 id="micModalTitle">🎤 Izin Mikrofon</h2><button class="xbtn" onclick="CM('ovMic')">×</button></div>
+  <div class="mb" id="micModalBody"></div>
+  <div class="mf" id="micModalFoot"></div>
+</div></div>
+
 <script>
 /* ══════════════════════════════════════
    §1 · CONSTANTS
@@ -947,9 +991,10 @@ function mkRoom(ri){
           <span class="qa-lbl">＋ Tambah:</span>
           <input class="qa-inp" id="qa${ri}" placeholder="Ketik nama barang / obat, Enter untuk tambah..." autocomplete="off"
             oninput="onQaInput(${ri},this.value)" onkeydown="onQaKey(event,${ri})" />
+          <button class="voice-btn" id="vbtn${ri}" onclick="startVoice(${ri})" title="Tambah dengan suara (contoh: 'alkohol 5')">🎤</button>
           <button class="btn ba" onclick="qaSubmitBtn(${ri})">＋</button>
         </div>
-        <div class="qa-hint">Enter = tambah · Esc = batal · Tab = pilih saran dari preset/inventaris</div>
+        <div class="qa-hint">Enter = tambah · Esc = batal · Tab = pilih saran · 🎤 = suara (ucapkan "nama barang jumlah", misal: "alkohol 5")</div>
         <div class="qa-sug" id="qas${ri}"></div>
         <div class="qa-merge" id="qam${ri}">
           <span id="qamTxt${ri}"></span>
@@ -1998,6 +2043,323 @@ addLog('info','App started v'+VER);
 /* ══════════════════════════════════════
    §29 · PWA — SERVICE WORKER
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   §30 · VOICE INPUT (Speech Recognition)
+══════════════════════════════════════ */
+(function(){
+
+  /* ── Konversi kata angka Indonesia ke digit ── */
+  const ID_NUMS={
+    nol:0,satu:1,dua:2,tiga:3,empat:4,lima:5,enam:6,tujuh:7,delapan:8,sembilan:9,
+    sepuluh:10,sebelas:11,duabelas:12,tigabelas:13,empatbelas:14,limabelas:15,
+    enambelas:16,tujuhbelas:17,delapanbelas:18,sembilanbelas:19,
+    'dua belas':12,'tiga belas':13,'empat belas':14,'lima belas':15,
+    'enam belas':16,'tujuh belas':17,'delapan belas':18,'sembilan belas':19,
+    duapuluh:20,'dua puluh':20,tigapuluh:30,'tiga puluh':30,
+    empatpuluh:40,'empat puluh':40,limapuluh:50,'lima puluh':50,
+    enampuluh:60,'enam puluh':60,tujuhpuluh:70,'tujuh puluh':70,
+    delapanpuluh:80,'delapan puluh':80,sembilanpuluh:90,'sembilan puluh':90,
+    seratus:100,duaratus:200,tigaratus:300,empatratus:400,limaratus:500,
+    'satu ratus':100,'dua ratus':200,'tiga ratus':300,'empat ratus':400,'lima ratus':500
+  };
+
+  function tryParseNum(tok){
+    const t=tok.toLowerCase().trim();
+    if(ID_NUMS[t]!==undefined)return ID_NUMS[t];
+    const n=parseInt(t);
+    return isNaN(n)?null:n;
+  }
+
+  /* ── Parse teks suara: "alkohol 5" → {name, qty} ── */
+  function parseVoice(text){
+    const raw=text.trim();
+    if(!raw)return null;
+    const tokens=raw.split(/\s+/);
+    if(tokens.length===0)return null;
+
+    // Angka di akhir: "alkohol 5"
+    const lastN=tryParseNum(tokens[tokens.length-1]);
+    if(lastN!==null&&tokens.length>1){
+      return{name:tokens.slice(0,-1).join(' '),qty:lastN};
+    }
+    // Angka di awal: "5 alkohol"
+    const firstN=tryParseNum(tokens[0]);
+    if(firstN!==null&&tokens.length>1){
+      return{name:tokens.slice(1).join(' '),qty:firstN};
+    }
+    // Tidak ada angka → qty default 1
+    return{name:raw,qty:1};
+  }
+
+  /* ── Terapkan hasil suara ke kamar ── */
+  function applyVoiceItem(ri,name,qty){
+    if(!name.trim()||qty<1)return;
+    const cap=name.trim().charAt(0).toUpperCase()+name.trim().slice(1);
+    const exist=S.rooms[ri].items.find(it=>it.nama.toLowerCase()===cap.toLowerCase()||it.nama.toLowerCase()===name.trim().toLowerCase());
+    pushUndo(ri);
+    if(exist){
+      exist.diambil=(exist.diambil||0)+qty;
+      scheduleSave();
+      renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);
+      showToast(`✅ "${exist.nama}" +${qty} → total ${exist.diambil}`);
+    } else {
+      const it=freshItem(cap);it.diambil=qty;
+      S.rooms[ri].items.push(it);
+      scheduleSave();
+      renderTable(ri);renderRoomStats(ri);renderSisaList(ri);refreshDot(ri);
+      showToast(`✅ Ditambah: "${cap}" × ${qty}`);
+    }
+    addLog('info',`Voice Kamar ${ri+1}: ${cap} x${qty}`);
+  }
+
+  /* ── State ── */
+  let _vRi=-1,_vRecog=null,_vActive=false,_vPendingRi=-1;
+
+  /* ── UI helpers ── */
+  function setVoiceUI(ri,on){
+    document.querySelectorAll('.voice-btn').forEach((b,i)=>{
+      // match by data from onclick attr
+      const onclick=b.getAttribute('onclick')||'';
+      const match=onclick.match(/startVoice\((\d+)\)/);
+      if(match&&parseInt(match[1])===ri)b.classList.toggle('listening',on);
+    });
+    const bar=document.getElementById('voiceBar');
+    if(bar)bar.classList.toggle('hidden',!on);
+  }
+
+  function setBarText(main,sub){
+    const t=document.getElementById('voiceBarTxt');
+    const p=document.getElementById('voiceBarPrev');
+    if(t)t.textContent=main||'';
+    if(p)p.textContent=sub||'';
+  }
+
+  /* ── Stop voice ── */
+  function stopVoice(){
+    if(_vRecog){try{_vRecog.abort();}catch(e){}}
+    _vRecog=null;
+    if(_vRi>=0)setVoiceUI(_vRi,false);
+    _vActive=false;_vRi=-1;
+    const bar=document.getElementById('voiceBar');
+    if(bar)bar.classList.add('hidden');
+  }
+  window.stopVoiceExt=stopVoice;
+
+  /* ── Mulai pengenalan suara (setelah izin oke) ── */
+  function beginRecognition(ri){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    _vRi=ri;_vActive=true;
+    const recog=new SR();
+    _vRecog=recog;
+    recog.lang='id-ID';
+    recog.interimResults=true;
+    recog.maxAlternatives=5;
+    recog.continuous=false;
+
+    setVoiceUI(ri,true);
+    setBarText('🎤 Mendengarkan...','ucapkan: "nama barang jumlah" — misal: "alkohol 5"');
+
+    recog.onresult=function(e){
+      let interim='',final='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const t=e.results[i][0].transcript;
+        if(e.results[i].isFinal)final+=t;else interim+=t;
+      }
+      const cur=final||interim;
+      if(cur){
+        const p=parseVoice(cur);
+        setBarText('🎤 Mendengarkan...',p&&p.name?`"${p.name}" × ${p.qty}`:cur);
+      }
+      if(final){
+        const p=parseVoice(final);
+        if(p&&p.name.trim().length>0){
+          stopVoice();
+          applyVoiceItem(ri,p.name,Math.max(1,p.qty));
+        } else {
+          setBarText('⚠ Tidak terdeteksi, coba ucapkan lagi...','');
+          setTimeout(()=>{if(_vActive&&_vRi===ri)stopVoice();},2000);
+        }
+      }
+    };
+
+    recog.onerror=function(e){
+      stopVoice();
+      if(e.error==='not-allowed'||e.error==='service-not-allowed'){
+        showMicModal('denied',ri);
+      } else if(e.error==='no-speech'){
+        showToast('🎤 Tidak ada suara — coba lagi',false,true);
+      } else if(e.error==='network'){
+        showToast('🎤 Butuh koneksi internet untuk Speech Recognition',false,true);
+      } else {
+        showToast('🎤 Error: '+e.error,false,true);
+      }
+    };
+
+    recog.onend=function(){
+      if(_vActive&&_vRi===ri)stopVoice();
+    };
+
+    try{recog.start();}
+    catch(e){
+      stopVoice();
+      showToast('❌ Gagal mulai: '+e.message,true);
+    }
+  }
+
+  /* ── Modal izin mikrofon ── */
+  function showMicModal(type,ri){
+    _vPendingRi=(ri!==undefined)?ri:_vPendingRi;
+    const title=document.getElementById('micModalTitle');
+    const body=document.getElementById('micModalBody');
+    const foot=document.getElementById('micModalFoot');
+    if(!body)return;
+
+    if(type==='denied'){
+      if(title)title.textContent='🔒 Izin Mikrofon Diblokir';
+      body.innerHTML=`
+        <div class="mic-warn">⚠ Akses mikrofon sebelumnya pernah ditolak atau diblokir browser. Perlu diaktifkan manual.</div>
+        <div class="mic-step">
+          <div class="mic-snum">1</div>
+          <div class="mic-stxt">Lihat <b>ikon kunci 🔒</b> atau <b>ikon info ⓘ</b> di pojok kiri <b>address bar</b> browser (bagian atas, tempat ketik URL).</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">2</div>
+          <div class="mic-stxt">Klik ikon tersebut → cari menu <b>"Izin Situs"</b> atau <b>"Site Settings"</b> → klik <b>Mikrofon</b>.</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">3</div>
+          <div class="mic-stxt">Ubah dari <code>Blokir</code> menjadi <code>Izinkan</code> lalu <b>refresh</b> halaman ini.</div>
+        </div>
+        <div class="mic-step">
+          <div class="mic-snum">4</div>
+          <div class="mic-stxt">Atau ketuk tombol <b>Coba Minta Izin</b> di bawah — browser akan menampilkan dialog izin.</div>
+        </div>`;
+      foot.innerHTML=`
+        <button class="btn bg" onclick="CM('ovMic')">Tutup</button>
+        <button class="btn bpur" onclick="retryMicPermission()">🔄 Coba Minta Izin</button>`;
+    } else {
+      // type === 'guide' — first time, explain how it works
+      if(title)title.textContent='🎤 Cara Pakai Suara';
+      body.innerHTML=`
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:12px">Browser akan meminta izin akses mikrofon. Klik <b style="color:var(--acc)">Izinkan</b> saat muncul dialog.</p>
+        <div class="mic-example">
+          <div class="mic-ex-title">Contoh ucapan</div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"alkohol 5"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Alkohol diambil 5</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"kasa steril sepuluh"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Kasa Steril diambil 10</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"3 spuit"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Spuit diambil 3</span></div>
+          <div class="mic-ex-row"><span class="mic-ex-say">"betadine"</span><span class="mic-ex-arr">→</span><span class="mic-ex-res">Betadine diambil 1</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--txt3);margin-top:10px">Jika nama sudah ada di kamar, jumlah akan <b style="color:var(--acc)">ditambahkan</b> ke total yang sudah ada.</p>`;
+      foot.innerHTML=`
+        <button class="btn bg" onclick="CM('ovMic')">Batal</button>
+        <button class="btn ba" onclick="CM('ovMic');doStartVoice(_vPendingRi)">🎤 Mulai Rekam</button>`;
+    }
+    OM('ovMic');
+  }
+
+  window.retryMicPermission=async function(){
+    CM('ovMic');
+    await new Promise(r=>setTimeout(r,300));
+    doStartVoice(_vPendingRi);
+  };
+
+  /* ── Core: minta izin lalu mulai ── */
+  async function doStartVoice(ri){
+    if(ri<0||ri===undefined)return;
+
+    // 1. Cek permission state lewat Permissions API (kalau tersedia)
+    let state='prompt';
+    if(navigator.permissions){
+      try{
+        const res=await navigator.permissions.query({name:'microphone'});
+        state=res.state;
+        // Pantau perubahan permission
+        res.onchange=()=>{if(res.state==='granted'&&_vPendingRi>=0)doStartVoice(_vPendingRi);};
+      }catch(e){}
+    }
+
+    if(state==='denied'){
+      showMicModal('denied',ri);
+      return;
+    }
+
+    // 2. getUserMedia — INI yang menampilkan dialog izin browser
+    //    Wajib dipanggil dari user gesture (click), yang kita sudah lakukan
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      // Langsung stop — kita hanya butuh izinnya
+      stream.getTracks().forEach(t=>t.stop());
+    }catch(err){
+      addLog('warn','getUserMedia: '+err.name+' '+err.message);
+      if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError'){
+        showMicModal('denied',ri);
+      }else if(err.name==='NotFoundError'){
+        showToast('❌ Mikrofon tidak ditemukan di perangkat ini.',true);
+      }else if(err.name==='NotSupportedError'||err.name==='TypeError'){
+        // HTTPS required — coba langsung SpeechRecognition saja
+        beginRecognition(ri);
+      }else{
+        showToast('❌ Tidak bisa akses mikrofon: '+err.message,true);
+      }
+      return;
+    }
+
+    // 3. Mulai speech recognition
+    beginRecognition(ri);
+  }
+
+  /* ── Entry point dari tombol 🎤 ── */
+  window.startVoice=function(ri){
+    // Toggle: jika sedang rekam di kamar yang sama → stop
+    if(_vActive&&_vRi===ri){stopVoice();return;}
+    if(_vActive)stopVoice();
+
+    // Cek browser support
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){
+      showToast('❌ Browser tidak support. Gunakan Chrome/Edge terbaru.',true);
+      return;
+    }
+
+    // Cek HTTPS / localhost (required untuk mic)
+    const proto=location.protocol;
+    if(proto!=='https:'&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+      showToast('⚠ Mikrofon hanya bisa di HTTPS atau localhost.',false,true);
+      // Tetap coba — mungkin jalan di beberapa konteks
+    }
+
+    _vPendingRi=ri;
+
+    // Cek apakah izin sudah pernah diberikan sebelumnya
+    if(navigator.permissions){
+      navigator.permissions.query({name:'microphone'}).then(res=>{
+        if(res.state==='granted'){
+          // Langsung mulai tanpa perlu dialog izin
+          doStartVoice(ri);
+        }else if(res.state==='denied'){
+          showMicModal('denied',ri);
+        }else{
+          // 'prompt' → tampilkan panduan dulu, user klik tombol baru minta izin
+          showMicModal('guide',ri);
+        }
+      }).catch(()=>doStartVoice(ri));
+    }else{
+      // Permissions API tidak tersedia → langsung coba
+      doStartVoice(ri);
+    }
+  };
+
+  // Expose untuk modal
+  window._vPendingRi=_vPendingRi;
+  Object.defineProperty(window,'_vPendingRi',{get:()=>_vPendingRi,set:v=>{_vPendingRi=v;}});
+
+  // ESC untuk stop
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&_vActive)stopVoice();
+  });
+
+})();
+
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js')
